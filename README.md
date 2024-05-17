@@ -1,4 +1,4 @@
-# Video-player-with-notes
+
 Imports:
 
 We import necessary modules and components from React and external libraries.
