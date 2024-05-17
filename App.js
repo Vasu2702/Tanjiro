@@ -25,12 +25,14 @@ const App = () => {
   const [editIndex, setEditIndex] = useState(null); // Track the index of the note being edited
   const playerRef = useRef(null); // Create a ref
 
+  // Function to convert total seconds to minutes and seconds format
   const secondsToMinutesAndSeconds = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
 
+  // Load notes from local storage on component mount
   useEffect(() => {
     const getNotes = () => {
       const storedNotes = localStorage.getItem(`notes-${videoID}`);
@@ -42,6 +44,7 @@ const App = () => {
     getNotes();
   }, [videoID]); // Dependency array includes videoID
 
+  // Function to add a new note
   const handleAddNote = () => {
     const currentTime = playerRef.current.getCurrentTime();
     const formattedTime = secondsToMinutesAndSeconds(currentTime);
@@ -61,18 +64,21 @@ const App = () => {
     }
   };
 
+  // Function to delete a note
   const handleDeleteNote = (noteIndex) => {
     const newNotes = notes.filter((note, index) => index !== noteIndex);
     setNotes(newNotes);
     localStorage.setItem(`notes-${videoID}`, JSON.stringify(newNotes));
   };
 
+  // Function to edit a note
   const handleEditNote = (noteIndex) => {
     setEditorContent(notes[noteIndex].content);
     setEditIndex(noteIndex);
     setIsEditorOpen(true);
   };
 
+  // Function to save edited note
   const saveEditedNote = () => {
     const newNotes = notes.map((note, index) =>
       index === editIndex ? { ...note, content: editorContent } : note
@@ -89,11 +95,11 @@ const App = () => {
     setVideoID(newVideoID);
   };
 
+  // Fetch video title from YouTube API
   const [videoTitle, setVideoTitle] = useState('TITLE'); // State for video title
-
   useEffect(() => {
     const fetchVideoTitle = async () => {
-      const API_KEY = 'AIzaSyBCy9xaEBUS1bR_HueaCv7Z2ABKWYQA4cY'; // Replace with your API key
+      const API_KEY = 'YOUR_YOUTUBE_API_KEY'; // Replace with your API key
       const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoID}&key=${API_KEY}`);
       if (!response.ok) {
         console.error('Error fetching video title:', response.statusText);
@@ -149,7 +155,6 @@ const App = () => {
               <a href={`#${note.timestamp}`} onClick={() => playerRef.current.seekTo(note.totalSeconds)}>
                 <br />
                 {"Timestamp-"}
-                
                 {note.clickableTimestamp}
               </a>
             </p>
