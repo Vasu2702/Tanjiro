@@ -24,15 +24,28 @@ const App = () => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editIndex, setEditIndex] = useState(null); // Track the index of the note being edited
   const playerRef = useRef(null); // Create a ref
+  function getFormattedDate() {
+    const today = new Date();
+    const day = today.getDate();
+    const month = today.toLocaleDateString("en-US", { month: "long" }).slice(0, 3); // Get first 3 letters of month
+    const year = today.getFullYear();
+    return `${day} ${month} '${year}`;
+  }
 
-  // Function to convert total seconds to minutes and seconds format
-  const secondsToMinutesAndSeconds = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  const secondsToMinutesAndSeconds = (elapsed) => {
+    const seconds = Math.floor(elapsed ) % 60;
+  const minutes = Math.floor(elapsed / (60)) % 60;
+  const hours = Math.floor(elapsed / (60 * 60));
+
+  // Format the time string based on hours
+  if (hours > 0) {
+    return `${hours} hr ${minutes} min ${seconds} sec`;
+  } else {
+    return `${minutes} min ${seconds} sec`;
+  }
+
   };
 
-  // Load notes from local storage on component mount
   useEffect(() => {
     const getNotes = () => {
       const storedNotes = localStorage.getItem(`notes-${videoID}`);
@@ -44,17 +57,17 @@ const App = () => {
     getNotes();
   }, [videoID]); // Dependency array includes videoID
 
-  // Function to add a new note
   const handleAddNote = () => {
     const currentTime = playerRef.current.getCurrentTime();
     const formattedTime = secondsToMinutesAndSeconds(currentTime);
+    const currentDateElement = getFormattedDate();
     if (editorContent) {
       const newNote = {
         timestamp: formattedTime,
         totalSeconds: currentTime,
         content: editorContent,
-        date: new Date().toLocaleDateString(),
-        clickableTimestamp: `[${formattedTime}]`, // Formatted clickable timestamp
+        date:currentDateElement ,
+        clickableTimestamp: `${formattedTime}`, // Formatted clickable timestamp
       };
 
       setNotes([...notes, newNote]);
@@ -64,21 +77,18 @@ const App = () => {
     }
   };
 
-  // Function to delete a note
   const handleDeleteNote = (noteIndex) => {
     const newNotes = notes.filter((note, index) => index !== noteIndex);
     setNotes(newNotes);
     localStorage.setItem(`notes-${videoID}`, JSON.stringify(newNotes));
   };
 
-  // Function to edit a note
   const handleEditNote = (noteIndex) => {
     setEditorContent(notes[noteIndex].content);
     setEditIndex(noteIndex);
     setIsEditorOpen(true);
   };
 
-  // Function to save edited note
   const saveEditedNote = () => {
     const newNotes = notes.map((note, index) =>
       index === editIndex ? { ...note, content: editorContent } : note
@@ -95,11 +105,11 @@ const App = () => {
     setVideoID(newVideoID);
   };
 
-  // Fetch video title from YouTube API
   const [videoTitle, setVideoTitle] = useState('TITLE'); // State for video title
+
   useEffect(() => {
     const fetchVideoTitle = async () => {
-      const API_KEY = 'YOUR_YOUTUBE_API_KEY'; // Replace with your API key
+      const API_KEY = 'AIzaSyBCy9xaEBUS1bR_HueaCv7Z2ABKWYQA4cY'; // Replace with your API key
       const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoID}&key=${API_KEY}`);
       if (!response.ok) {
         console.error('Error fetching video title:', response.statusText);
@@ -122,16 +132,28 @@ const App = () => {
 
   return (
     <div className="video-player-container">
-      <h1>{"Video Player With Notes"}</h1>
+      <h1 className='vd'>{"Video Player With Notes"}</h1>
       <input type="text" placeholder="Enter YouTube Video ID" onChange={(e) => updateVideo(e.target.value)} />
       <br />
-      <button onClick={(e) => updateVideo(e.target.value)}>Change Video</button>
+      <button className="cv" onClick={(e) => updateVideo(e.target.value)}>Change Video</button>
       <br />
-      <ReactPlayer ref={playerRef} url={videoUrl} controls width="720px" height="405px" />
+      <div className="video-wrapper">
+        <ReactPlayer ref={playerRef} url={videoUrl} controls width="900px" height="500px" />
+      </div>
       <h2 className='title'>{videoTitle}</h2>
       <div className="notes-container">
-        <h2>My Notes</h2>
-        <button onClick={() => setIsEditorOpen(true)}>Add New Note</button>
+      <h2>
+          My Notes
+          <button className="add-note-button" onClick={() => setIsEditorOpen(true)}>
+            <span className="plus-icon-wrapper">
+              <span className="plus-icon">+</span>
+            </span>
+            Add New Note
+          </button>
+
+        </h2>
+        <p className='para'>All your notes at a single place.Click on any note to go to specific timestamp in the video</p>
+        
         {isEditorOpen && (
           <div className="editor-container">
             <CustomToolbar />
@@ -142,7 +164,7 @@ const App = () => {
               formats={App.formats}
             />
             {editIndex === null ? (
-              <button onClick={handleAddNote}>Save Note</button>
+              <button className="cv" onClick={handleAddNote}>Save Note</button>
             ) : (
               <button onClick={saveEditedNote}>Save Edited Note</button>
             )}
@@ -150,17 +172,19 @@ const App = () => {
         )}
         {notes.map((note, index) => (
           <div className="note" key={index}>
-            <p>
-              {note.date}
-              <a href={`#${note.timestamp}`} onClick={() => playerRef.current.seekTo(note.totalSeconds)}>
-                <br />
-                {"Timestamp-"}
+            <div className="note-content">
+              <p className='para'>{note.date}</p>
+              
+              <p className='para'>{"Timestamp:"}</p>
+              <a className="bl" href={`#${note.timestamp}`} onClick={() => playerRef.current.seekTo(note.totalSeconds)}>
                 {note.clickableTimestamp}
               </a>
-            </p>
-            <p dangerouslySetInnerHTML={{ __html: note.content }} />
-            <button className='del' onClick={() => handleDeleteNote(index)}>Delete</button>
-            <button className='edit' onClick={() => handleEditNote(index)}>Edit</button>
+              <p dangerouslySetInnerHTML={{ __html: note.content }} />
+            </div>
+            <div className="note-actions">
+              <button className='cv' onClick={() => handleDeleteNote(index)}>Delete</button>
+              <button className='cv' onClick={() => handleEditNote(index)}>Edit</button>
+            </div>
           </div>
         ))}
       </div>
